@@ -389,33 +389,36 @@ func (r *CLM) pruneTour() {
 // - "hotstart": This is useful when there was a past run, with a given
 //    tourfile. In this case, the active contig list and orientations are
 //    derived from the last tour in the file.
-func (r *CLM) Activate(shuffle bool, rng *rand.Rand) {
-	N := len(r.Tigs)
-	// if shuffle {
-	// 	r.reportActive(true)
-	// 	r.pruneByDensity()
-	// }
-	activeCounts, _ := r.reportActive(true)
-
-	r.Tour.Tigs = make([]Tig, activeCounts)
-	idx := 0
-	for _, tig := range r.Tigs {
-		if tig.IsActive {
-			r.Tour.Tigs[idx] = Tig{tig.Idx, tig.Size}
-			idx++
+func (r *CLM) Activate(resume bool, rng *rand.Rand) {
+	// hotstart
+	if resume {
+		r.Tour.M = r.M()
+	// de novo
+	} else {
+		N := len(r.Tigs)
+		// r.reportActive(true)
+		// r.pruneByDensity()
+        activeCounts, _ := r.reportActive(true)
+		r.Tour.Tigs = make([]Tig, activeCounts)
+		idx := 0
+		for _, tig := range r.Tigs {
+			if tig.IsActive {
+				r.Tour.Tigs[idx] = Tig{tig.Idx, tig.Size}
+				idx++
+			}
 		}
-	}
 
-	r.Tour.M = r.M()
-	if shuffle {
+		r.Tour.M = r.M()
+
 		r.Tour.Shuffle(rng)
+		r.Signs = make([]byte, N)
+		for i := 0; i < N; i++ {
+			r.Signs[i] = '+'
+		}
+		r.flipAll() // Initialize with the signs of the tigs
 	}
-	r.Signs = make([]byte, N)
-	for i := 0; i < N; i++ {
-		r.Signs[i] = '+'
-	}
-	r.flipAll() // Initialize with the signs of the tigs
 }
+
 
 // reportActive prints number and total length of active contigs
 func (r *CLM) reportActive(verbose bool) (activeCounts, sumLength int) {

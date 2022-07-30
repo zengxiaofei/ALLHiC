@@ -15,6 +15,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -38,7 +39,7 @@ type Optimizer struct {
 func (r *Optimizer) Run() {
 	r.rng = rand.New(rand.NewSource(r.Seed))
 	clm := NewCLM(r.Clmfile, r.REfile)
-	tourfile := RemoveExt(r.REfile) + ".tour"
+	tourfile := RemoveExt(path.Base(r.REfile)) + ".tour"
 
 	// Load tourfile if it exists
 	if _, err := os.Stat(tourfile); r.Resume && err == nil {
@@ -50,7 +51,7 @@ func (r *Optimizer) Run() {
 		log.Noticef("Backup `%s` to `%s`", tourfile, backupTourFile)
 	}
 
-	clm.Activate(true, r.rng)
+	clm.Activate(r.Resume, r.rng)
 
 	// tourfile logs the intermediate configurations
 	log.Noticef("Optimization history logged to `%s`", tourfile)
@@ -138,9 +139,7 @@ func (r *CLM) parseTourFile(filename string) {
 			log.Errorf("Contig %s not found!", tigName)
 			continue
 		}
-		tigs = append(tigs, Tig{
-			Idx: idx,
-		})
+		tigs = append(tigs, Tig{Idx: idx, Size: r.Tigs[idx].Size})
 		r.Signs[idx] = tigOrientation
 		r.Tigs[idx].IsActive = true
 	}
